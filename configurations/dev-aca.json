@@ -1,0 +1,34 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "westeurope"
+        },
+        "prefix": {
+            "value": "lmbd-dev"
+        },
+        "vnetId": {
+            "value": "/subscriptions/07d31f21-fee3-4c2b-9b4c-afcf5d7e1a7a/resourceGroups/lambda-api-dev/providers/Microsoft.Network/virtualNetworks/lmbd-dev-vnet"
+        },
+        "containerVersion": {
+            "value": "1.6.0"
+        },
+        "containerRegistryName": {
+            "value": "lmbddevacranshul"
+        },
+        "containerRegistryUsername": {
+            "value": "lmdbdevacranshul"
+        },
+        "containerRegistryPassword": {
+           "reference": {
+            "keyVault": {
+                "id": "/subscriptions/07d31f21-fee3-4c2b-9b4c-afcf5d7e1a7a/resourceGroups/lambda-api-dev/providers/Microsoft.KeyVault/vaults/lmbd-dev-kv-poc"
+            },
+            "secretName": "acrAdminPassword"
+           }
+        }
+
+
+    }
+}
