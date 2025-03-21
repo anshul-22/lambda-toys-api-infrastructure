@@ -25,18 +25,18 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2019-11-0
   location: location
   properties: {
     securityRules: [
-      { 
-        name:'allowhttpsinbound'
-        properties:{ 
-          direction:'Inbound'
-          access:'Allow'
-          protocol:'Tcp'
-          description:'Allow https traffic into API'
+      {
+        name: 'allowhttpsinbound'
+        properties: {
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: 'Tcp'
+          description: 'Allow https traffic into API'
           sourceAddressPrefix: '81.80.72.0/24'
-          sourcePortRange:'*'
-          destinationAddressPrefix:'*'
-          destinationPortRange:'443'
-          priority:200
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '443'
+          priority: 200
         }
       }
     ]
@@ -93,7 +93,7 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-03-15' = {
 
 resource sqlDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-06-15' = {
   name: '${prefix}-sqldb'
-  parent:cosmosDbAccount
+  parent: cosmosDbAccount
   properties: {
     resource: {
       id: '${prefix}-sqldb'
@@ -102,7 +102,7 @@ resource sqlDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-06-15' =
   }
 }
 
-resource sqlContainerName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-06-15' = {
+resource sqlContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-06-15' = {
   parent: sqlDb
   name: '${prefix}-orders'
   properties: {
@@ -119,19 +119,35 @@ resource sqlContainerName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/co
   }
 }
 
+resource stateContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-12-01-preview' = {
+  parent: sqlDb
+  name: '${prefix}-state'
+  properties: {
+    resource: {
+      id: '${prefix}-state'
+      partitionKey: {
+        paths: [
+          '/partitionKey'
+        ]
+      }
+    }
+    options: {}
+  }
+}
+
 resource cosmosPrivateDns 'Microsoft.Network/privateDnsZones@2024-06-01' = {
   name: 'privatelink.documents.azure.com'
   location: 'global'
 }
 
-resource cosmosPrivateDnsNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01'  = {
+resource cosmosPrivateDnsNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
   name: '${prefix}-cosmos-dns-link'
-  location:'global'
-  parent:cosmosPrivateDns
-  properties:{ 
-    registrationEnabled:false
-    virtualNetwork:{ 
-      id:virtualNetwork.id
+  location: 'global'
+  parent: cosmosPrivateDns
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
     }
   }
 }
@@ -160,11 +176,11 @@ resource cosmosPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' =
 resource privateEndpoitntDnsLink 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01' = {
   name: '${prefix}-cosmos-pe-dns'
   parent: cosmosPrivateEndpoint
-  properties:{ 
-    privateDnsZoneConfigs:[
+  properties: {
+    privateDnsZoneConfigs: [
       {
-        name:'privatelink.documents.azure.com'
-        properties:{
+        name: 'privatelink.documents.azure.com'
+        properties: {
           privateDnsZoneId: cosmosPrivateDns.id
         }
       }
@@ -195,9 +211,9 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
       name: 'standard'
       family: 'A'
     }
-    enableRbacAuthorization:true
-    enablePurgeProtection:true
-    softDeleteRetentionInDays:90
+    enableRbacAuthorization: true
+    enablePurgeProtection: true
+    softDeleteRetentionInDays: 90
   }
 }
 
@@ -207,3 +223,13 @@ resource keyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
     value: containerRegistry.listCredentials().passwords[0].value
   }
 }
+
+output vnetId string = virtualNetwork.id
+output containerRegistryName string = containerRegistry.name
+output containerRegistryUsername string = containerRegistry.name
+output secretKeyVaultName string = keyVault.name
+output containerRegistrySecret string = split(keyVaultSecret.name, '/')[1]
+output cosmosAccountName string = cosmosDbAccount.name
+output cosmosDbName string = sqlDb.name
+output cosmosStateContainerName string = stateContainer.name
+output cosmosSqlContainerName string = sqlContainer.name
